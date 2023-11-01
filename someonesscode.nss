@@ -1,3 +1,7 @@
+// code from a computer
+// error free
+// poorer performance than baseline code
+
 fhealing#include "NW_I0_GENERIC"
 #include "our_constants"
 
