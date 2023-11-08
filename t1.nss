@@ -46,7 +46,7 @@ in NPC - local variable, deleted upon death
 in Objects (waypoints, spawnpoints) - permanent (only use our team's objects)
 
 locate errors
-click on any file, add a space somewhere, save, console shows error location in T2.nss 
+click on any file, add a space somewhere, save, console shows error location in T2.nss
 consult professor
 compile code and build module regularly - to make locating possible errors easier
 
@@ -103,7 +103,7 @@ void T1_HeartBeat()
     // count number of heartbeats for master
     // if masters dies, respawning master is a new object
     // store information in spawn portals if its needed after death too (eg PORTAL_BLUE_4)
-    // only store information in our team's objects 
+    // only store information in our team's objects
     if (IsMaster())
     {
         // returns 0 if no variable 'HBCOUNT' exists, that is no heartbeats have happened yet
@@ -120,7 +120,7 @@ void T1_HeartBeat()
     if (GetIsInCombat())
         return;
 
-    // when its not 'sensible' to keep current target 
+    // when its not 'sensible' to keep current target
     // get random target that is an altair or the doubler
     // reasonably efficient code
     string sTarget = GetLocalString( OBJECT_SELF, "TARGET" );
@@ -151,6 +151,7 @@ void T1_HeartBeat()
     object oCreature = GetNearestObjectToLocation( OBJECT_TYPE_CREATURE, GetLocation( oTarget ), i );
     while (GetIsObjectValid( oCreature ))
     {
+    /*
         // check if closest creature to location is me
         if (GetLocation( oCreature ) == GetLocation( OBJECT_SELF ))
             break;
@@ -166,22 +167,41 @@ void T1_HeartBeat()
         if (GetIsInCombat( oCreature ))
             break;
         // an ally is close enough to the target. assume its mnoving towards the target. Get new target for me
-        if (GetLocalString( oCreature, "TARGET" ) == sTarget)
+        if   (GetLocalString( oCreature, "TARGET" ) == sTarget)
         {
-            bNewTarget = TRUE;
-            break;
+    */
+        bNewTarget = TRUE;
+        break;
+    /*
         }
         // if still in loop check next creature
         ++i;
         // get next nearest creature to target
         oCreature = GetNearestObjectToLocation( OBJECT_TYPE_CREATURE, GetLocation( oTarget ), i );
         // back to top
+    */
     }
 
-    // get new random target if new rarget is needed
+    // New target selection
     if (bNewTarget)
     {
-        sTarget = GetRandomTarget();
+        // Assign targets by npc type
+        if  (IsMaster()) {
+            sTarget = WpDoubler();
+            SpeakString("Im in doubler", TALKVOLUME_SHOUT );
+        }
+        if  (IsCleric()) {
+            sTarget = WpClosestAltarLeft();
+            SpeakString("Im in ClosestAltarLeft", TALKVOLUME_SHOUT );
+        }
+        if  (IsFighter()) {
+            sTarget = WpClosestAltarRight();
+            SpeakString("Im in ClosestAltarRight", TALKVOLUME_SHOUT );
+        }
+        else {
+            sTarget = WpFurthestAltarRight();
+            SpeakString("Im in FurthestAltarRight", TALKVOLUME_SHOUT );  
+        }
         SetLocalString( OBJECT_SELF, "TARGET", sTarget );
         oTarget = GetObjectByTag( sTarget );
         if (!GetIsObjectValid( oTarget ))
@@ -247,7 +267,7 @@ void T1_UserDefined( int Event )
         // Whenever the NPC dies.
         case EVENT_DEATH:
 
-            // 'print' location 
+            // 'print' location
             SpeakString("Location: " +LocationToString(GetLocation(OBJECT_SELF)), TALKVOLUME_SHOUT );
 
             break;
@@ -264,6 +284,6 @@ void T1_UserDefined( int Event )
 // Called when the fight starts, just before the initial spawning.
 void T1_Initialize( string sColor )
 {
-    // give a name 
+    // give a name
     SetTeamName( sColor, "Default-" + GetStringLowerCase( sColor ) );
 }
