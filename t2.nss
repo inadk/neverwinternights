@@ -1,6 +1,19 @@
 #include "NW_I0_GENERIC"
 #include "our_constants"
 
+// -------------------------------------------------------------------------------------------------------------------------------
+// Our focus is at directing our creatures to the "right" altars
+// this is done here by applying conditions that set scores to the altars
+// MODIFY ONLY THIS PART
+// experiment with specifying different score altering measurements coming from realtime game statistics
+// eg. distance to altar, altar occupation status
+// set creature specific behaviour
+// DO NOT CHANGE OTHER PARTS FOR NOW
+// push changes to a new branch to this github repository
+// ask anything else you need to know:)
+
+// assign scores to target locations
+// based self distance to altar and 'friendly' status of altar
 float GetLocScore( string sAltar ) {
     int friendlyAltarControl = ClaimerOf( sAltar ) == MyColor();
     if (friendlyAltarControl == TRUE) {
@@ -17,6 +30,7 @@ string GetGoodTarget()
     // The next line moves to the spawn location of the similar opponent
     // ActionMoveToLocation( GetLocation( GetObjectByTag( "WP_" + OpponentColor( OBJECT_SELF ) + "_" + IntToString( GetLocalInt( OBJECT_SELF, "INDEX" ) ) ) ), TRUE );
 
+    // important locations defined with string variables
     string sDoubler = WpDoubler();
     string sClosestLeft = WpClosestAltarLeft();
     string sClosetsRight = WpClosestAltarRight();
@@ -25,7 +39,7 @@ string GetGoodTarget()
 
     string best_altar = "";
 
-    // class based stuff or other stuff
+    // class based 'decision' condition example
     if (IsMaster()) {
         int friendlyAltarControl = ClaimerOf( sDoubler ) == MyColor();
         if (!friendlyAltarControl){
@@ -33,7 +47,7 @@ string GetGoodTarget()
         }
     }
 
-
+    // chosse best altar by selecting highest altar score
     if (best_altar == "")
     {
         float scoreDoubler = GetLocScore( sDoubler );
@@ -62,7 +76,7 @@ string GetGoodTarget()
         }
     }
 
-
+    // to do something (select random target) even if no previous conditions were met
     if (best_altar == "") {
         best_altar = GetRandomTarget();
         SpeakString("(failover) going to " + best_altar, TALKVOLUME_SHOUT);
@@ -72,6 +86,8 @@ string GetGoodTarget()
 
     return best_altar;
 }
+
+// -------------------------------------------------------------------------------------------------------------------------------
 
 // Called every time that the AI needs to take a combat decision. The default is
 // a call to the NWN DetermineCombatRound.
