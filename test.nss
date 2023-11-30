@@ -5,7 +5,7 @@ void T1_HeartBeat()
     if (IsMaster())
     {
         // Get the object (unit) for the altar
-        object oAltar = GetObjectByTag("WP_ALTAR_BLUE_1");
+        object oAltar = GetObjectByTag("WP_ALTAR_BLUE_1"); //can be any other altar\waypoint\location
 
         // Get the first object in the area
         object oCreature = GetFirstObjectInArea(GetArea(oAltar));
