@@ -6,7 +6,7 @@
 int GetNumEnemiesAroundAltar(object oAltar)
 {
     // Define the detection radius here
-    float detectionRadius = 10.0;
+    float detectionRadius = 6.0;
 
     // Get all creatures in the game
     object oCreature = GetFirstObjectInArea();
@@ -53,19 +53,25 @@ int GetNumEnemiesAroundAltar(object oAltar)
 // based self distance to altar and 'friendly' status of altar
 float GetLocScore( string sAltar ) {
 
+    // If team member occupies altar, make it not a preferred altar
     int friendlyAltarControl = ClaimerOf( sAltar ) == MyColor();
     if (friendlyAltarControl == TRUE) {
         return -999.9;
     }
 
-    object oAltar = GetObjectByTag( sAltar );
-    ////////////////////  ADDED THE LINE BELOW AND CHANGED THE WAY SCORE IS CALCULATED   ///////////
+    // check if altar is occupied by no one and if that's the case, make that the preferred altar
+    int enemyAltarControl = ClaimerOf( sAltar ) != MyColor();
+    if (friendlyAltarControl == FALSE && enemyAltarControl == FALSE) {
+        return 999.9;
+    }
 
+
+    object oAltar = GetObjectByTag( sAltar );
     int numEnemies = GetNumEnemiesAroundAltar(oAltar);
 
-    // added 0.8 and 0.5 as a weight here, so we can test what weight value gives the best results
-    float score = 0.0 - 0.8 * GetDistanceBetween(OBJECT_SELF, oAltar)- 0.5 * numEnemies;
-    //////////////////////////////////////////////////////////////////////////////////////////
+    // distance and number of enemies at an altar affect the score
+    float score = 0.0 - GetDistanceBetween(OBJECT_SELF, oAltar) - 20.0 * numEnemies;
+
     return score;
 }
 
