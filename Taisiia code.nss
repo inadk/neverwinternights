@@ -52,6 +52,7 @@ void T1_HeartBeat()
 
 /////////////////////////////////
 full code with getloc function + destination assignment after the spawn
+/////////////////////////////////
 
 #include "NW_I0_GENERIC"
 #include "our_constants"
