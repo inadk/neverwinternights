@@ -23,7 +23,7 @@ void T1_HeartBeat()
             if (GetIsEnemy(oCreature))
             {
                 // Check if the enemy is at the altar
-                if (GetDistanceBetween(oCreature, oAltar) < 10.0)
+                if (GetDistanceBetween(oCreature, oAltar) < 5.0)
                 {
                     // Increment the counter
                     iEnemiesAtAltar++;
