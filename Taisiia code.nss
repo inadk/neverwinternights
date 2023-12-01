@@ -75,7 +75,7 @@ string GetBestAltar()
     if (score2 == 0) return sAltar2;
 
     // If all altars have enemies, return an empty string
-    return "";
+    return "WP_DOUBLER";
 }
 
 
