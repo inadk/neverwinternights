@@ -1,62 +1,105 @@
-// Function is placed in the T1_HeartBeat(). Every 6 seconds it displays the number of the enemies and their tags, that are located in the altar
-
-void T1_HeartBeat()
-{
-    if (IsMaster())
-    {
-        // Get the object (unit) for the altar
-        object oAltar = GetObjectByTag("WP_ALTAR_BLUE_1"); //can be any other altar\waypoint\location
-
-        // Get the first object in the area
-        object oCreature = GetFirstObjectInArea(GetArea(oAltar));
-
-        // Initialize a counter for enemies at the altar
-        int iEnemiesAtAltar = 0;
-
-        // Initialize a string to store the tags of the enemies
-        string sEnemyTags = "";
-
-        // Loop through all objects in the area
-        while (GetIsObjectValid(oCreature))
-        {
-            // Check if the object is an enemy
-            if (GetIsEnemy(oCreature))
-            {
-                // Check if the enemy is at the altar
-                if (GetDistanceBetween(oCreature, oAltar) < 5.0)
-                {
-                    // Increment the counter
-                    iEnemiesAtAltar++;
-
-                    // Add the tag of the enemy to the string
-                    sEnemyTags += GetTag(oCreature) + ", ";
-                }
-            }
-
-            // Get the next object in the area
-            oCreature = GetNextObjectInArea(GetArea(oAltar));
-        }
-
-        // Check if there were any enemies at the altar
-        if (iEnemiesAtAltar == 0)
-        {
-            SpeakString("No enemies at the altar.", TALKVOLUME_SHOUT);
-        }
-        else
-        {
-            // Print the number of enemies and their tags
-            SpeakString(IntToString(iEnemiesAtAltar) + " enemies at the altar: " + sEnemyTags, TALKVOLUME_SHOUT);
-        }
-    }
-
-
-/////////////////////////////////
-full code with getloc function + destination assignment after the spawn
-/////////////////////////////////
-
 #include "NW_I0_GENERIC"
 #include "our_constants"
 
+/////////////////
+// Function to get the number of enemies around a specific altar and their tags. This function adds extra points to the numEnemies in case of more dangerous enemies (master\fighter)
+
+int GetNumEnemiesAroundAltar(object oAltar)
+{
+    // Define the detection radius here
+    float detectionRadius = 6.0;
+
+    // Get all creatures in the game
+    object oCreature = GetFirstObjectInArea();
+    int numEnemies = 0;
+
+    // Iterate through all creatures
+    while (GetIsObjectValid(oCreature))
+    {
+        // Check if the object is a creature and an enemy
+        if (GetObjectType(oCreature) == OBJECT_TYPE_CREATURE && !SameTeam(oCreature))
+        {
+            // Check the distance between the creature and the altar
+            float distanceToAltar = GetDistanceBetween(oCreature, oAltar);
+
+            // If the distance is within the detection radius, increment the enemy count
+            if (distanceToAltar <= detectionRadius)
+            {
+                numEnemies++;
+
+                // Add extra points if the enemy is a master
+                if (GetTag(oCreature) == "NPC_RED_4")
+                {
+                    numEnemies += 3;
+                }
+
+                // Add extra points if the enemy is a fighter\amazon
+                if (GetTag(oCreature) == "NPC_RED_3")
+                {
+                    numEnemies += 2;
+                }
+
+                if (GetTag(oCreature) == "NPC_RED_5")
+                {
+                    numEnemies += 2;
+                }
+            }
+        }
+
+        // Move to the next object in the area
+        oCreature = GetNextObjectInArea();
+    }
+
+    // Return the number of enemies
+    return numEnemies;
+}
+
+
+//// Chooses the best altar for roam team
+string GetBestAltar()
+{
+    // Define the altar tags
+    string sAltar1 = "WP_ALTAR_RED_1";
+    string sAltar2 = "WP_ALTAR_RED_2";
+
+    // Get the altars
+    object oAltar1 = GetObjectByTag(sAltar1);
+    object oAltar2 = GetObjectByTag(sAltar2);
+
+    // Calculate the scores for each altar
+    int score1 = GetNumEnemiesAroundAltar(oAltar1);
+    int score2 = GetNumEnemiesAroundAltar(oAltar2);;
+
+    // Check for altars with zero enemies
+    if (score1 == 0) return sAltar1;
+    if (score2 == 0) return sAltar2;
+
+    // If all altars have enemies, return an empty string
+    return "";
+}
+
+
+// Separate team, which consists of master
+// His goal is to identify empty enemy altars and capture them
+void T1_RoamTeam()
+{
+    string sTarget = GetRandomTarget();
+    string sOurColor = MyColor(OBJECT_SELF);
+
+    if (IsMaster())
+    {
+        sTarget = GetBestAltar();
+        SpeakString("Moving to altar: " + sTarget, TALKVOLUME_SHOUT);
+    }
+    SetLocalString(OBJECT_SELF, "TARGET", sTarget);
+    ActionMoveToLocation(GetLocation(GetObjectByTag(sTarget)), TRUE);
+}
+
+
+
+
+
+/////////////////////////////
 // -------------------------------------------------------------------------------------------------------------------------------
 // Our focus is at directing our creatures to the "right" altars
 // this is done here by applying conditions that set scores to the altars
@@ -70,53 +113,27 @@ full code with getloc function + destination assignment after the spawn
 
 // assign scores to target locations
 // based self distance to altar and 'friendly' status of altar
-
-
-void T1_MoveToAssignedPosition()
-{
-    string sTarget = GetRandomTarget();
-    string sOurColor = MyColor(OBJECT_SELF);
-    if (IsWizardLeft())
-    {
-        sTarget = "WP_ALTAR_BLUE_1";
-    }
-    if (IsWizardRight())
-    {
-        sTarget = "WP_ALTAR_BLUE_1";
-    }
-    if (IsClericRight())
-    {
-        sTarget = "WP_ALTAR_BLUE_1";
-    }
-    if (IsClericLeft())
-    {
-        sTarget = "WP_ALTAR_BLUE_1";
-    }
-    if (IsFighterRight())
-    {
-        sTarget = "WP_ALTAR_BLUE_1";
-    }
-    if (IsFighterLeft())
-    {
-        sTarget = "WP_ALTAR_BLUE_1";
-    }
-    if (IsMaster())
-    {
-        sTarget = "WP_ALTAR_BLUE_1";
-    }
-    SetLocalString(OBJECT_SELF, "TARGET", sTarget);
-    ActionMoveToLocation(GetLocation(GetObjectByTag(sTarget)), TRUE);
-}
-
-
 float GetLocScore( string sAltar ) {
+
+    // If team member occupies altar, make it not a preferred altar
     int friendlyAltarControl = ClaimerOf( sAltar ) == MyColor();
     if (friendlyAltarControl == TRUE) {
         return -999.9;
     }
 
+    // check if altar is occupied by no one and if that's the case, make that the preferred altar
+    int enemyAltarControl = ClaimerOf( sAltar ) != MyColor();
+    if (friendlyAltarControl == FALSE && enemyAltarControl == FALSE) {
+        return 999.9;
+    }
+
+
     object oAltar = GetObjectByTag( sAltar );
-    float score = 0.0 - GetDistanceBetween(OBJECT_SELF, oAltar);
+    int numEnemies = GetNumEnemiesAroundAltar(oAltar);
+
+    // distance and number of enemies at an altar affect the score
+    float score = 0.0 - GetDistanceBetween(OBJECT_SELF, oAltar) - 20.0 * numEnemies;
+
     return score;
 }
 
@@ -182,6 +199,7 @@ string GetGoodTarget()
     return best_altar;
 }
 
+
 // -------------------------------------------------------------------------------------------------------------------------------
 
 // Called every time that the AI needs to take a combat decision. The default is
@@ -194,52 +212,8 @@ void T1_DetermineCombatRound( object oIntruder = OBJECT_INVALID, int nAI_Difficu
 // Called every heartbeat (i.e., every six seconds).
 void T1_HeartBeat()
 {
-    if (IsMaster())
-    {
-        // Get the object for the altar
-        object oAltar = GetObjectByTag("WP_ALTAR_BLUE_1");
+    T1_RoamTeam();
 
-        // Get the first object in the area
-        object oCreature = GetFirstObjectInArea(GetArea(oAltar));
-
-        // Initialize a counter for enemies at the altar
-        int iEnemiesAtAltar = 0;
-
-        // Initialize a string to store the tags of the enemies
-        string sEnemyTags = "";
-
-        // Loop through all objects in the area
-        while (GetIsObjectValid(oCreature))
-        {
-            // Check if the object is an enemy
-            if (GetIsEnemy(oCreature))
-            {
-                // Check if the enemy is at the altar
-                if (GetDistanceBetween(oCreature, oAltar) < 5.0)
-                {
-                    // Increment the counter
-                    iEnemiesAtAltar++;
-
-                    // Add the tag of the enemy to the string
-                    sEnemyTags += GetTag(oCreature) + ", ";
-                }
-            }
-
-            // Get the next object in the area
-            oCreature = GetNextObjectInArea(GetArea(oAltar));
-        }
-
-        // Check if there were any enemies at the altar
-        if (iEnemiesAtAltar == 0)
-        {
-            SpeakString("No enemies at the altar.", TALKVOLUME_SHOUT);
-        }
-        else
-        {
-            // Print the number of enemies and their tags
-            SpeakString(IntToString(iEnemiesAtAltar) + " enemies at the altar: " + sEnemyTags, TALKVOLUME_SHOUT);
-        }
-    }
 
     if (GetIsInCombat())
         return;
@@ -299,7 +273,9 @@ void T1_HeartBeat()
 // Called when the NPC is spawned.
 void T1_Spawn()
 {
-    T1_MoveToAssignedPosition();
+    string sTarget = GetGoodTarget();
+    SetLocalString( OBJECT_SELF, "TARGET", sTarget );
+    ActionMoveToLocation( GetLocation( GetObjectByTag( sTarget ) ), TRUE );
 }
 
 
@@ -354,5 +330,5 @@ void T1_UserDefined( int Event )
 // Called when the fight starts, just before the initial spawning.
 void T1_Initialize( string sColor )
 {
-    SetTeamName( sColor, "Default-" + GetStringLowerCase( sColor ) );
+    SetTeamName( sColor, "Team 10 -" + GetStringLowerCase( sColor ) );
 }
