@@ -1,13 +1,69 @@
 #include "NW_I0_GENERIC"
 #include "our_constants"
 
-/////////////////
-// Function to get the number of enemies around a specific altar
 
 // Setting colors to identify enemies\allies
 string sOurColor = MyColor(OBJECT_SELF);
 string sOppColor = OpponentColor(OBJECT_SELF);
 
+/// Assigning default positions
+void T1_MoveToAssignedPosition()
+{
+    string sTarget = GetRandomTarget();
+    string sOurColor = MyColor(OBJECT_SELF);
+    if (IsWizardLeft())
+    {
+        sTarget = "ALTAR_" + sOurColor + "_2";
+    }
+    if (IsWizardRight())
+    {
+        sTarget = "ALTAR_" + sOurColor + "_1";
+    }
+    if (IsClericRight())
+    {
+        sTarget = "WP_CENTRE_" + sOurColor;
+    }
+    if (IsClericLeft())
+    {
+        sTarget = "WP_CENTRE_" + sOurColor;
+    }
+    if (IsFighterRight())
+    {
+        sTarget = "WP_FRONT_" + sOurColor + "_1";
+    }
+    if (IsFighterLeft())
+    {
+        sTarget = "WP_FRONT_" + sOurColor + "_2";
+    }
+    if (IsMaster())
+    {
+        sTarget = "WP_DOUBLER";
+    }
+    SetLocalString(OBJECT_SELF, "TARGET", sTarget);
+    ActionMoveToLocation(GetLocation(GetObjectByTag(sTarget)), TRUE);
+}
+
+//// Heartbeat counter
+int HeartBeatCounter()
+{
+    // Get the current object
+    object oSelf = OBJECT_SELF;
+
+    // Get the current heartbeat count
+    int nHeartbeatCount = GetLocalInt(oSelf, "HEARTBEAT_COUNT");
+
+    // Increment the heartbeat count
+    nHeartbeatCount++;
+
+    // Store the new heartbeat count
+    SetLocalInt(oSelf, "HEARTBEAT_COUNT", nHeartbeatCount);
+
+    // Return the heartbeat count
+    return nHeartbeatCount;
+}
+
+
+// Function to get the number of enemies around a specific altar
 int GetNumEnemiesAroundAltar(object oAltar)
 {
     // Define the detection radius here
@@ -32,18 +88,18 @@ int GetNumEnemiesAroundAltar(object oAltar)
                 numEnemies++;
 
                 // Add extra points if the enemy is a master
-                if (GetTag(oCreature) == "NPC_RED_4")
+                if (GetTag(oCreature) == "NPC_" + sOppColor + "_4")
                 {
                     numEnemies += 3;
                 }
 
                 // Add extra points if the enemy is a fighter\amazon
-                if (GetTag(oCreature) == "NPC_RED_3")
+                if (GetTag(oCreature) == "NPC_" + sOppColor + "_3")
                 {
                     numEnemies += 2;
                 }
 
-                if (GetTag(oCreature) == "NPC_RED_5")
+                if (GetTag(oCreature) == "NPC_" + sOppColor + "_5")
                 {
                     numEnemies += 2;
                 }
@@ -222,8 +278,7 @@ void T1_DetermineCombatRound( object oIntruder = OBJECT_INVALID, int nAI_Difficu
 // Called every heartbeat (i.e., every six seconds).
 void T1_HeartBeat()
 {
-    T1_RoamTeam();
-
+    int nCount = HeartBeatCounter();
 
     if (GetIsInCombat())
         return;
@@ -283,10 +338,26 @@ void T1_HeartBeat()
 // Called when the NPC is spawned.
 void T1_Spawn()
 {
-    string sTarget = GetGoodTarget();
-    SetLocalString( OBJECT_SELF, "TARGET", sTarget );
-    ActionMoveToLocation( GetLocation( GetObjectByTag( sTarget ) ), TRUE );
+    // Get the current object
+    object oSelf = OBJECT_SELF;
+
+    // Get the current heartbeat count
+    int nHeartbeatCount = GetLocalInt(oSelf, "HEARTBEAT_COUNT");
+
+    // If the heartbeat count is 0, call T1_MoveToAssignedPosition
+    if (nHeartbeatCount < 4)
+    {
+        T1_MoveToAssignedPosition();
+    }
+    else
+    {
+        T1_RoamTeam();
+        string sTarget = GetGoodTarget();
+        SetLocalString( OBJECT_SELF, "TARGET", sTarget );
+        ActionMoveToLocation( GetLocation( GetObjectByTag( sTarget ) ), TRUE );
+    }
 }
+
 
 
 // This function is called when certain events take place, after the standard
@@ -340,5 +411,5 @@ void T1_UserDefined( int Event )
 // Called when the fight starts, just before the initial spawning.
 void T1_Initialize( string sColor )
 {
-    SetTeamName( sColor, "Team 10 -" + GetStringLowerCase( sColor ) );
+    SetTeamName( sColor, "Team 2" + GetStringLowerCase( sColor ) );
 }
