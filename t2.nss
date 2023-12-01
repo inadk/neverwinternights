@@ -25,17 +25,137 @@ float GetLocScore( string sAltar ) {
     return score;
 }
 
+string sDoubler = WpDoubler();
+string sClosestLeft = WpClosestAltarLeft();
+string sClosetsRight = WpClosestAltarRight();
+string sFurthestLeft = WpFurthestAltarLeft();
+string sFurthestRight = WpFurthestAltarRight();
+
+int ourPointsPerHeartBeat( ){
+    int count = 0;
+    if ( ClaimerOf( sClosestLeft ) == MyColor() ) {
+        count += 1;
+    }
+    if ( ClaimerOf( sClosetsRightAltar ) == MyColor() ) {
+        count += 1;
+    }
+    if ( ClaimerOf( sFurthestLeft ) == MyColor() ) {
+        count += 1;
+    }
+    if ( ClaimerOf( sFurthestRight ) == MyColor() ) {
+        count += 1;
+    }
+    if ( ClaimerOf( sDoubler ) == MyColor() ) {
+        count = count * 2;
+    }
+    return count;
+}
+
+
+int opponentPointsPerHeartBeat( ){
+    int count = 0;
+    if ( ClaimerOf( sClosestLeft ) == OpponentColor() ) {
+        count += 1;
+    }
+    if ( ClaimerOf( sClosetsRightAltar ) == OpponentColor() ) {
+        count += 1;
+    }
+    if ( ClaimerOf( sFurthestLeft ) == OpponentColor() ) {
+        count += 1;
+    }
+    if ( ClaimerOf( sFurthestRight ) == OpponentColor() ) {
+        count += 1;
+    }
+    if ( ClaimerOf( sDoubler ) == OpponentColor() ) {
+        count = count * 2;
+    }
+    return count;
+}
+
+int closestAltarLeftEmpty(){
+    if ( ClaimerOf( sClosestLeft ) == "" ) {
+        return True;
+    }
+    return False;
+}
+
+int closestAltarRightEmpty(){
+    if ( ClaimerOf( sClosetsRightAltar ) == "" ) {
+        return true;
+    }
+    return false;
+}
+
+int furthestAltarLeftEmpty( ){
+    if ( ClaimerOf( sFurthestLeft ) == "" ) {
+        return true;
+    }
+    return false;
+}
+
+int furthestAltarRightEmpty( ){
+    if ( ClaimerOf( sFurthestRight ) == "" ) {
+        return true;
+    }
+    return false;
+}
+
+int doublerEmpty( ){
+    if (  ClaimerOf( sDoubler ) == "" ) {
+        return true;
+    }
+    return false;
+}
+
+int emptyAltarExists( ) {
+    if ( closestAltarLeftEmpty() == true ) {
+        return true;
+    }
+    if ( closestAltarRightEmpty() == true) {
+        return true;
+    }
+    if ( furthestAltarLeftEmpty() == true) {
+        return true;
+    }
+    if ( furthestAltarRightEmpty() == true) {
+        return true;
+    }
+    if ( doublerEmpty( ) == true ) {
+        return true;
+    }
+    return false;
+}
+
+
+int gameState( ) {
+    if ( emptyAltarExists( ) == true ) {
+        return 0;
+    }
+    if (  ourPointsPerHeartBeat() > opponentPointsPerHeartBeat() ) {
+        return 1;
+    }
+    return 2;
+}
+
+
+
+
+int gameState( )
+
 string GetGoodTarget()
 {
     // The next line moves to the spawn location of the similar opponent
     // ActionMoveToLocation( GetLocation( GetObjectByTag( "WP_" + OpponentColor( OBJECT_SELF ) + "_" + IntToString( GetLocalInt( OBJECT_SELF, "INDEX" ) ) ) ), TRUE );
 
     // important locations defined with string variables
+
+    /*
     string sDoubler = WpDoubler();
     string sClosestLeft = WpClosestAltarLeft();
     string sClosetsRight = WpClosestAltarRight();
     string sFurthestLeft = WpFurthestAltarLeft();
     string sFurthestRight = WpFurthestAltarRight();
+    */
 
     string best_altar = "";
 
