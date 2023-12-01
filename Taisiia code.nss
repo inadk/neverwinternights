@@ -7,8 +7,10 @@ string sOurColor = MyColor(OBJECT_SELF);
 string sOppColor = OpponentColor(OBJECT_SELF);
 
 /// Assigning default positions
-void T1_MoveToAssignedPosition()
+void T2_MoveToAssignedPosition()
 {
+
+    // If we reach this point, the NPC survived the fight and there are no enemies in range. Continue with moving to the assigned position.
     string sTarget = GetRandomTarget();
     string sOurColor = MyColor(OBJECT_SELF);
     if (IsWizardLeft())
@@ -21,45 +23,27 @@ void T1_MoveToAssignedPosition()
     }
     if (IsClericRight())
     {
-        sTarget = "WP_CENTRE_" + sOurColor;
+        sTarget = "WP_DOUBLER";
     }
     if (IsClericLeft())
     {
-        sTarget = "WP_CENTRE_" + sOurColor;
+        sTarget = "WP_DOUBLER";
     }
     if (IsFighterRight())
     {
-        sTarget = "WP_FRONT_" + sOurColor + "_1";
+        sTarget = "WP_ALTAR_" + sOurColor + "_1";
     }
     if (IsFighterLeft())
     {
-        sTarget = "WP_FRONT_" + sOurColor + "_2";
+        sTarget = "WP_ALTAR_" + sOurColor + "_2";
     }
     if (IsMaster())
     {
         sTarget = "WP_DOUBLER";
     }
+    SpeakString("Moving to the default position", TALKVOLUME_SHOUT );
     SetLocalString(OBJECT_SELF, "TARGET", sTarget);
     ActionMoveToLocation(GetLocation(GetObjectByTag(sTarget)), TRUE);
-}
-
-//// Heartbeat counter
-int HeartBeatCounter()
-{
-    // Get the current object
-    object oSelf = OBJECT_SELF;
-
-    // Get the current heartbeat count
-    int nHeartbeatCount = GetLocalInt(oSelf, "HEARTBEAT_COUNT");
-
-    // Increment the heartbeat count
-    nHeartbeatCount++;
-
-    // Store the new heartbeat count
-    SetLocalInt(oSelf, "HEARTBEAT_COUNT", nHeartbeatCount);
-
-    // Return the heartbeat count
-    return nHeartbeatCount;
 }
 
 
@@ -142,7 +126,7 @@ string GetBestAltar()
 
 // Separate team, which consists of master
 // His goal is to identify empty enemy altars and capture them
-void T1_RoamTeam()
+void T2_RoamTeam()
 {
     string sTarget = GetRandomTarget();
     string sOurColor = MyColor(OBJECT_SELF);
@@ -150,20 +134,14 @@ void T1_RoamTeam()
     if (IsMaster())
     {
         object oMaster = GetObjectByTag("NPC_" + sOurColor + "_4");
-        if (SameTeam(oMaster)) // Check if the master is from our team
-        {
         sTarget = GetBestAltar();
-        SpeakString("Moving to altar: " + sTarget, TALKVOLUME_SHOUT);
+        SpeakString("Roaming to altar: " + sTarget, TALKVOLUME_SHOUT);
         SetLocalString(oMaster, "TARGET", sTarget);
         ActionMoveToLocation(GetLocation(GetObjectByTag(sTarget)), TRUE);
-        }
+
      }
 
 }
-
-
-
-
 
 /////////////////////////////
 // -------------------------------------------------------------------------------------------------------------------------------
@@ -197,8 +175,8 @@ float GetLocScore( string sAltar ) {
     object oAltar = GetObjectByTag( sAltar );
     int numEnemies = GetNumEnemiesAroundAltar(oAltar);
 
-    // distance and number of enemies at an altar affect the score
-    float score = 0.0 - GetDistanceBetween(OBJECT_SELF, oAltar) - 20.0 * numEnemies;
+    // distance, number and type of enemies at an altar affect the score
+    float score = 0.0 - GetDistanceBetween(OBJECT_SELF, oAltar) - 30.0 * numEnemies;
 
     return score;
 }
@@ -266,19 +244,30 @@ string GetGoodTarget()
 }
 
 
+
 // -------------------------------------------------------------------------------------------------------------------------------
 
 // Called every time that the AI needs to take a combat decision. The default is
 // a call to the NWN DetermineCombatRound.
-void T1_DetermineCombatRound( object oIntruder = OBJECT_INVALID, int nAI_Difficulty = 10 )
+void T2_DetermineCombatRound( object oIntruder = OBJECT_INVALID, int nAI_Difficulty = 10 )
 {
     DetermineCombatRound( oIntruder, nAI_Difficulty );
 }
 
 // Called every heartbeat (i.e., every six seconds).
-void T1_HeartBeat()
+void T2_HeartBeat()
 {
-    int nCount = HeartBeatCounter();
+
+    // returns 0 if no variable 'HBCOUNT' exists, that is no heartbeats have happened yet
+    int iHBcount = GetLocalInt( OBJECT_SELF, "HBCOUNT" );
+    iHBcount++;
+    SetLocalInt( OBJECT_SELF, "HBCOUNT", iHBcount);
+
+
+    if (iHBcount > 7)
+    {
+        T2_RoamTeam();
+    }
 
     if (GetIsInCombat())
         return;
@@ -336,33 +325,31 @@ void T1_HeartBeat()
 }
 
 // Called when the NPC is spawned.
-void T1_Spawn()
+void T2_Spawn()
 {
-    // Get the current object
-    object oSelf = OBJECT_SELF;
+    int nCurrentTime = GetTimeSecond();
 
-    // Get the current heartbeat count
-    int nHeartbeatCount = GetLocalInt(oSelf, "HEARTBEAT_COUNT");
+    // If the current time is less than 15 seconds, call T1_MoveToAssignedPosition
+    if (nCurrentTime < 15)
 
-    // If the heartbeat count is 0, call T1_MoveToAssignedPosition
-    if (nHeartbeatCount < 4)
     {
-        T1_MoveToAssignedPosition();
+        T2_MoveToAssignedPosition();
     }
-    else
+    // If the current time is 15 seconds or more, call T2_RoamTeam and GetGoodTarget
+    if (nCurrentTime > 15)
     {
-        T1_RoamTeam();
         string sTarget = GetGoodTarget();
-        SetLocalString( OBJECT_SELF, "TARGET", sTarget );
-        ActionMoveToLocation( GetLocation( GetObjectByTag( sTarget ) ), TRUE );
+        SetLocalString(OBJECT_SELF, "TARGET", sTarget);
+        ActionMoveToLocation(GetLocation(GetObjectByTag(sTarget)), TRUE);
     }
 }
 
 
 
+
 // This function is called when certain events take place, after the standard
 // NWN handling of these events has been performed.
-void T1_UserDefined( int Event )
+void T2_UserDefined( int Event )
 {
     switch (Event)
     {
@@ -380,7 +367,7 @@ void T1_UserDefined( int Event )
 
         // Every heartbeat (i.e., every six seconds).
         case EVENT_HEARTBEAT:
-            T1_HeartBeat();
+            T2_HeartBeat();
             break;
 
         // Whenever the NPC perceives a new creature.
@@ -401,7 +388,7 @@ void T1_UserDefined( int Event )
 
         // When the NPC has just been spawned.
         case EVENT_SPAWN:
-            T1_Spawn();
+            T2_Spawn();
             break;
     }
 
@@ -409,7 +396,7 @@ void T1_UserDefined( int Event )
 }
 
 // Called when the fight starts, just before the initial spawning.
-void T1_Initialize( string sColor )
+void T2_Initialize( string sColor )
 {
     SetTeamName( sColor, "Team 2" + GetStringLowerCase( sColor ) );
 }
