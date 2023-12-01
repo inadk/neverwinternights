@@ -2,7 +2,11 @@
 #include "our_constants"
 
 /////////////////
-// Function to get the number of enemies around a specific altar and their tags. This function adds extra points to the numEnemies in case of more dangerous enemies (master\fighter)
+// Function to get the number of enemies around a specific altar
+
+// Setting colors to identify enemies\allies
+string sOurColor = MyColor(OBJECT_SELF);
+string sOppColor = OpponentColor(OBJECT_SELF);
 
 int GetNumEnemiesAroundAltar(object oAltar)
 {
@@ -57,10 +61,11 @@ int GetNumEnemiesAroundAltar(object oAltar)
 
 //// Chooses the best altar for roam team
 string GetBestAltar()
+
 {
     // Define the altar tags
-    string sAltar1 = "WP_ALTAR_RED_1";
-    string sAltar2 = "WP_ALTAR_RED_2";
+    string sAltar1 = "WP_ALTAR_" + sOppColor + "_1";
+    string sAltar2 = "WP_ALTAR_" + sOppColor + "_2";
 
     // Get the altars
     object oAltar1 = GetObjectByTag(sAltar1);
@@ -88,11 +93,16 @@ void T1_RoamTeam()
 
     if (IsMaster())
     {
+        object oMaster = GetObjectByTag("NPC_" + sOurColor + "_4");
+        if (SameTeam(oMaster)) // Check if the master is from our team
+        {
         sTarget = GetBestAltar();
         SpeakString("Moving to altar: " + sTarget, TALKVOLUME_SHOUT);
-    }
-    SetLocalString(OBJECT_SELF, "TARGET", sTarget);
-    ActionMoveToLocation(GetLocation(GetObjectByTag(sTarget)), TRUE);
+        SetLocalString(oMaster, "TARGET", sTarget);
+        ActionMoveToLocation(GetLocation(GetObjectByTag(sTarget)), TRUE);
+        }
+     }
+
 }
 
 
