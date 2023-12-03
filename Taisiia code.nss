@@ -6,45 +6,6 @@
 string sOurColor = MyColor(OBJECT_SELF);
 string sOppColor = OpponentColor(OBJECT_SELF);
 
-/// Assigning default positions
-void T2_MoveToAssignedPosition()
-{
-
-    // If we reach this point, the NPC survived the fight and there are no enemies in range. Continue with moving to the assigned position.
-    string sTarget = GetRandomTarget();
-    string sOurColor = MyColor(OBJECT_SELF);
-    if (IsWizardLeft())
-    {
-        sTarget = "ALTAR_" + sOurColor + "_2";
-    }
-    if (IsWizardRight())
-    {
-        sTarget = "ALTAR_" + sOurColor + "_1";
-    }
-    if (IsClericRight())
-    {
-        sTarget = "WP_DOUBLER";
-    }
-    if (IsClericLeft())
-    {
-        sTarget = "WP_DOUBLER";
-    }
-    if (IsFighterRight())
-    {
-        sTarget = "WP_ALTAR_" + sOurColor + "_1";
-    }
-    if (IsFighterLeft())
-    {
-        sTarget = "WP_ALTAR_" + sOurColor + "_2";
-    }
-    if (IsMaster())
-    {
-        sTarget = "WP_DOUBLER";
-    }
-    SpeakString("Moving to the default position", TALKVOLUME_SHOUT );
-    SetLocalString(OBJECT_SELF, "TARGET", sTarget);
-    ActionMoveToLocation(GetLocation(GetObjectByTag(sTarget)), TRUE);
-}
 
 
 // Function to get the number of enemies around a specific altar
@@ -327,21 +288,11 @@ void T2_HeartBeat()
 // Called when the NPC is spawned.
 void T2_Spawn()
 {
-    int nCurrentTime = GetTimeSecond();
 
-    // If the current time is less than 15 seconds, call T1_MoveToAssignedPosition
-    if (nCurrentTime < 15)
-
-    {
-        T2_MoveToAssignedPosition();
-    }
-    // If the current time is 15 seconds or more, call T2_RoamTeam and GetGoodTarget
-    if (nCurrentTime > 15)
-    {
         string sTarget = GetGoodTarget();
         SetLocalString(OBJECT_SELF, "TARGET", sTarget);
         ActionMoveToLocation(GetLocation(GetObjectByTag(sTarget)), TRUE);
-    }
+
 }
 
 
